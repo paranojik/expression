@@ -103,6 +103,7 @@ defmodule Expression.Eval do
     end
   end
 
+  def eval!({:literal, literal}, _context, _mod) when is_struct(literal, Decimal), do: Decimal.to_float(literal)
   def eval!({:literal, literal}, _context, _mod), do: literal
   def eval!({:text, text}, _context, _mod), do: text
   def eval!({:+, [a, b]}, ctx, mod), do: eval!(a, ctx, mod, :num) + eval!(b, ctx, mod, :num)
@@ -135,7 +136,8 @@ defmodule Expression.Eval do
 
   defp eval!(ast, ctx, mod, type), do: ast |> eval!(ctx, mod) |> guard_type!(type)
 
-  defp guard_type!(v, :num) when is_number(v) or is_struct(v, Decimal), do: v
+  defp guard_type!(v, :num) when is_number(v), do: v
+  defp guard_type!(v, :num) when is_struct(v, Decimal), do: Decimal.to_float(v)
 
   defp guard_type!({:not_found, attributes}, :num),
     do: raise("attribute is not found: `#{Enum.join(attributes, ".")}`")
